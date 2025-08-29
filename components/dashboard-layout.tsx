@@ -2,9 +2,9 @@
 
 import type React from "react"
 import { useState } from "react"
+import { signOut, useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, Files, BookOpen, Users, Settings, LogOut, Menu, X } from "lucide-react"
-import { XerodmaLogo } from "@/components/xerodma-logo"
+import { LayoutDashboard, Files, BookOpen, Users, Settings, LogOut, Menu, X, Shield } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useRouter, usePathname } from "next/navigation"
 
@@ -16,6 +16,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
+  const { data: session } = useSession()
 
   const navigation = [
     { name: "Dashboard", href: "/staff/dashboard", icon: LayoutDashboard },
@@ -25,9 +26,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { name: "Settings", href: "/staff/dashboard/settings", icon: Settings },
   ]
 
-  const handleLogout = () => {
-    localStorage.removeItem("xerodma-user")
-    router.push("/")
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: "/" })
   }
 
   const handleNavigation = (href: string) => {
@@ -53,7 +53,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       >
         <div className="flex h-full flex-col">
           <div className="flex h-16 items-center justify-between px-6 border-b border-sidebar-border">
-            <XerodmaLogo size="sm" />
+            <div className="flex items-center space-x-2">
+              <Shield className="w-8 h-8 text-primary" />
+              <span className="text-lg font-bold text-sidebar-foreground">XERODMA</span>
+            </div>
             <Button
               variant="ghost"
               size="sm"
@@ -87,10 +90,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="border-t border-sidebar-border p-4">
             <div className="flex items-center space-x-3 mb-4">
               <div className="w-8 h-8 bg-sidebar-primary rounded-full flex items-center justify-center">
-                <span className="text-sm font-medium text-sidebar-primary-foreground">SA</span>
+                <span className="text-sm font-medium text-sidebar-primary-foreground">
+                  {session?.user?.name?.charAt(0) || session?.user?.username?.charAt(0) || "SA"}
+                </span>
               </div>
               <div>
-                <p className="text-sm font-medium text-sidebar-foreground">Staff Admin</p>
+                <p className="text-sm font-medium text-sidebar-foreground">
+                  {session?.user?.name || session?.user?.username || "Staff Admin"}
+                </p>
                 <p className="text-xs text-muted-foreground">XERODMA Staff</p>
               </div>
             </div>

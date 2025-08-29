@@ -1,7 +1,7 @@
 "use client"
 import { useState } from "react"
 import type React from "react"
-
+import { signIn, getSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Shield, Eye, EyeOff, ArrowLeft } from "lucide-react"
-import { useAuth } from "@/components/auth-context"
 
 export default function StaffLoginPage() {
   const [username, setUsername] = useState("")
@@ -17,7 +16,6 @@ export default function StaffLoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const { login } = useAuth()
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,11 +24,22 @@ export default function StaffLoginPage() {
     setIsLoading(true)
 
     try {
-      const success = await login(username, password)
-      if (success) {
-        router.push("/staff/dashboard")
-      } else {
+      const result = await signIn("credentials", {
+        username,
+        password,
+        redirect: false,
+      })
+
+      if (result?.error) {
         setError("Invalid credentials. Please try again.")
+      } else {
+        // Check if session was created successfully
+        const session = await getSession()
+        if (session) {
+          router.push("/staff/dashboard")
+        } else {
+          setError("Login failed. Please try again.")
+        }
       }
     } catch (err) {
       setError("Login failed. Please check your credentials.")
